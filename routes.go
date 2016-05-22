@@ -27,37 +27,37 @@ var routes = Routes{
 	Route{
 		"Login",
 		"POST",
-		"/api/login",
+		"/login",
 		Login,
 	},
 	Route{
 		"Logout",
 		"GET",
-		"/api/logout",
+		"/logout",
 		Logout,
 	},
 	Route{
 		"ListEvents",
 		"GET",
-		"/api/events",
+		"/admin/events",
 		ListEvents,
 	},
 	Route{
 		"AddEvent",
 		"POST",
-		"/api/events",
+		"/admin/events",
 		AddEvent,
 	},
 	Route{
 		"UpdateEvent",
 		"PUT",
-		"/api/events/{eventId}",
+		"/admin/events/{eventId}",
 		UpdateEvent,
 	},
 	Route{
 		"DeleteEvent",
 		"DELETE",
-		"/api/events/{eventId}",
+		"/admin/events/{eventId}",
 		DeleteEvent,
 	},
 }

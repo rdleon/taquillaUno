@@ -23,6 +23,76 @@ type User struct {
 
 type Users []User
 
+func LoginForm(w http.ResponseWriter, r *http.Request) {
+	var (
+		tpl  *template.Template
+		sess *sessions.Session
+		err  error
+	)
+
+	sess, err = Store.Get(r, "logged")
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	tmp := sess.Values["uid"]
+
+	if tmp != nil {
+		// Already logged in
+		http.Redirect(w, r, "/", 301)
+		return
+	}
+
+	tpl, err = template.New("layout.html").ParseFiles("templates/layout.html", "templates/login.html")
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	err = tpl.Execute(w, nil)
+
+	if err != nil {
+		LogError(w, err)
+	}
+}
+
+func CreateUserForm(w http.ResponseWriter, r *http.Request) {
+	var (
+		tpl  *template.Template
+		sess *sessions.Session
+		err  error
+	)
+
+	sess, err = Store.Get(r, "logged")
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	tmp := sess.Values["uid"]
+
+	if tmp != nil {
+		fmt.Fprintf(w, "Already logged in")
+	}
+
+	tpl, err = template.New("create_user.html").ParseFiles("templates/layout.html", "templates/create_user.html")
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	err = tpl.Execute(w, nil)
+
+	if err != nil {
+		LogError(w, err)
+	}
+}
+
 func Login(w http.ResponseWriter, r *http.Request) {
 	var (
 		email    string
@@ -50,11 +120,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	email = r.FormValue("email")
 	password = r.FormValue("password")
 
-	err = db.Conn.QueryRow("SELECT uid, password FROM users WHERE email = $1", email).Scan(&uid, &hash)
+	err = db.Conn.QueryRow("SELECT uid, password FROM users WHERE email = $1 AND enabled = TRUE", email).Scan(&uid, &hash)
 
 	if err == sql.ErrNoRows {
 		// Timed derivation of valid email possible
-		fmt.Fprintf(w, "Wrong credentials")
+		http.Redirect(w, r, "/login", 301)
 		return
 	} else if err != nil {
 		LogError(w, err)
@@ -64,29 +134,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 
 	if err != nil {
-		fmt.Fprintf(w, "Wrong credentials")
+		http.Redirect(w, r, "/login", 301)
 		return
 	}
 
 	sess.Values["uid"] = uid
 	sess.Save(r, w)
 
-	fmt.Fprintf(w, "logged in")
-}
-
-func LoginForm(w http.ResponseWriter, r *http.Request) {
-	var tpl *template.Template
-
-	tpl, err := template.New("layout.html").ParseFiles("templates/layout.html", "templates/login.html")
-	if err != nil {
-		LogError(w, err)
-	}
-
-	err = tpl.Execute(w, nil)
-
-	if err != nil {
-		LogError(w, err)
-	}
+	http.Redirect(w, r, "/", 301)
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -105,5 +160,5 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	sess.Options.MaxAge = -1
 	sess.Save(r, w)
 
-	fmt.Fprintf(w, "logged out")
+	http.Redirect(w, r, "/login", 301)
 }
