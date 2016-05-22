@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"html/template"
 	"net/http"
 
@@ -75,8 +74,10 @@ func CreateUserForm(w http.ResponseWriter, r *http.Request) {
 
 	tmp := sess.Values["uid"]
 
-	if tmp != nil {
-		fmt.Fprintf(w, "Already logged in")
+	if tmp == nil {
+		// Not logged in
+		http.Redirect(w, r, "/", 301)
+		return
 	}
 
 	tpl, err = template.New("create_user.html").ParseFiles("templates/layout.html", "templates/create_user.html")
@@ -113,7 +114,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	tmp := sess.Values["uid"]
 
 	if tmp != nil {
-		fmt.Fprintf(w, "Already logged in")
+		// Already logged in
+		http.Redirect(w, r, "/", 301)
 		return
 	}
 
