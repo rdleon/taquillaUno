@@ -52,12 +52,5 @@ func NewRouter() *mux.Router {
 			Handler(handler)
 	}
 
-	// Serve the statics assets of the sites (imgs, css and js)
-	router.
-		Methods("GET").
-		PathPrefix("/static/").
-		Name("Public files").
-		Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
-
 	return router
 }
