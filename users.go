@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"html/template"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -15,84 +15,9 @@ type User struct {
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
 	Email    string `json:"email"`
-	Role     string `json:"role"`
-	Created  int    `json:"created"`
-	Enabled  bool   `json:"enabled"`
 }
 
 type Users []User
-
-func LoginForm(w http.ResponseWriter, r *http.Request) {
-	var (
-		tpl  *template.Template
-		sess *sessions.Session
-		err  error
-	)
-
-	sess, err = Store.Get(r, "logged")
-
-	if err != nil {
-		LogError(w, err)
-		return
-	}
-
-	tmp := sess.Values["uid"]
-
-	if tmp != nil {
-		// Already logged in
-		http.Redirect(w, r, "/", 301)
-		return
-	}
-
-	tpl, err = template.New("layout.html").ParseFiles("templates/layout.html", "templates/login.html")
-
-	if err != nil {
-		LogError(w, err)
-		return
-	}
-
-	err = tpl.Execute(w, nil)
-
-	if err != nil {
-		LogError(w, err)
-	}
-}
-
-func CreateUserForm(w http.ResponseWriter, r *http.Request) {
-	var (
-		tpl  *template.Template
-		sess *sessions.Session
-		err  error
-	)
-
-	sess, err = Store.Get(r, "logged")
-
-	if err != nil {
-		LogError(w, err)
-		return
-	}
-
-	tmp := sess.Values["uid"]
-
-	if tmp == nil {
-		// Not logged in
-		http.Redirect(w, r, "/", 301)
-		return
-	}
-
-	tpl, err = template.New("create_user.html").ParseFiles("templates/layout.html", "templates/create_user.html")
-
-	if err != nil {
-		LogError(w, err)
-		return
-	}
-
-	err = tpl.Execute(w, nil)
-
-	if err != nil {
-		LogError(w, err)
-	}
-}
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	var (
@@ -141,6 +66,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sess.Values["uid"] = uid
+	sess.Values["isAdmin"] = true
 	sess.Save(r, w)
 
 	http.Redirect(w, r, "/", 301)
@@ -163,4 +89,88 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	sess.Save(r, w)
 
 	http.Redirect(w, r, "/login", 301)
+}
+
+func CreateUser(w http.ResponseWriter, r *http.Request) {
+	var (
+		uname       string
+		fname       string
+		email       string
+		password    string
+		passConfirm string
+		hash        []byte
+		err         error
+	)
+
+	uname = r.FormValue("uname")
+	fname = r.FormValue("fname")
+	email = r.FormValue("email")
+	password = r.FormValue("password")
+	passConfirm = r.FormValue("passConfirm")
+
+	if len(uname) > 2 && len(fname) > 0 && len(email) > 3 && len(password) > 8 && password == passConfirm {
+		http.Redirect(w, r, "/admin/users/add", 301)
+		return
+	}
+
+	hash, err = bcrypt.GenerateFromPassword([]byte(password), 10)
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	stmt, err := db.Conn.Prepare("INSERT INTO users(user_name, full_name, email, password) values($1, $2, $3, $4)")
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	res, err := stmt.Exec(uname, fname, email, string(hash))
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	lastId, err := res.LastInsertId()
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	path := fmt.Sprintf("/admin/users/%d", lastId)
+	http.Redirect(w, r, path, 301)
+}
+
+func ListUsers(w http.ResponseWriter, r *http.Request) {
+	var (
+		uid   int
+		uname string
+		fname string
+		email string
+		user  User
+		users Users
+	)
+
+	rows, err := db.Conn.Query("SELECT uid, user_name, fullname, email FROM users WHERE enabled = 't' ORDER BY uid DESC")
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err = rows.Scan(&uid, &uname, &fname, &email)
+		user = User{}
+		users = append(users, user)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		LogError(w, err)
+		return
+	}
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -46,7 +45,7 @@ func saveEvent(event Event) {
 }
 
 func ListEvents(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "List of events")
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 }
 
 func AddEvent(w http.ResponseWriter, r *http.Request) {

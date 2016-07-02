@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 
@@ -35,22 +34,18 @@ func main() {
 	// TODO: Set public route
 	router := NewRouter()
 
+	fmt.Println("Runnig server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	t, err := template.New("layout.html").ParseFiles("templates/layout.html", "templates/index.html")
-	if err != nil {
-		LogError(w, err)
-	}
-	err = t.Execute(w, nil)
-	if err != nil {
-		LogError(w, err)
-	}
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	fmt.Fprintf(w, "{\"status\": \"ok\", \"version\": 1}")
 }
 
 func LogError(w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintf(w, "500 Internal Server Error\n\n")
+	fmt.Fprintf(w, "{\"status\": \"error\", \"message\": \"Internal Server Error\"}")
 	log.Println("Server error", err)
 }
