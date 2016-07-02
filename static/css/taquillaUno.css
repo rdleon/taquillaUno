@@ -3,9 +3,11 @@
   padding: 0;
 }
 
-body {
+html, body {
   background: white;
   color: black;
+  height: 100%;
+  width: 100%;
 }
 
 .wrapper {
@@ -18,7 +20,7 @@ body {
 .header {
   display: table-row;
   height: 1px;
-  background: #1abc9c;
+  background: #105B63;
   color: #DDDDDD;
 }
 
@@ -51,4 +53,9 @@ body {
   height: 1px;
   background: #105B63;
   color: #FFFAD5;
+}
+
+label {
+  display: block;
+  text-align: right;
 }
