@@ -57,7 +57,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "{\"status\": \"Error\", \"uid\": -1}")
+		fmt.Fprintf(w, "{\"status\": \"Wrong username/password\"}")
 		return
 	}
 
@@ -74,9 +74,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	response["token"], err = token.SignedString([]byte("verysecretKey"))
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println("Error: ", err)
-		fmt.Fprintf(w, "{\"error\": \"Internal Server Error\"}")
+		LogError(w, err)
 		return
 	}
 
@@ -109,10 +107,12 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if len(uname) < 2 && len(fname) < 1 && len(email) < 3 {
 		// Set bad request header
-		fmt.Fprintf(w, "{\"status\": \"error\", \"message\":\"Missing parameters\"}")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "{\"error\":\"Missing parameters\"}")
 		return
 	} else if len(password) < 8 {
-		fmt.Fprintf(w, "{\"status\": \"error\", \"message\":\"Password too short\"}")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "{\"error\":\"Password too short\"}")
 		return
 	}
 
