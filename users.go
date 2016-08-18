@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/sessions"
 	"github.com/rdleon/taquillaUno/db"
@@ -40,7 +42,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if tmp != nil {
 		// Already logged in
-		http.Redirect(w, r, "/", 301)
+		fmt.Fprintf(w, "{\"status\": \"ok\", \"uid\": %d}", tmp)
 		return
 	}
 
@@ -51,7 +53,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if err == sql.ErrNoRows {
 		// Timed derivation of valid email possible
-		http.Redirect(w, r, "/login", 301)
+		fmt.Fprintf(w, "{\"status\": \"Error\", \"uid\": -1}")
 		return
 	} else if err != nil {
 		LogError(w, err)
@@ -61,7 +63,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 
 	if err != nil {
-		http.Redirect(w, r, "/login", 301)
+		fmt.Fprintf(w, "{\"status\": \"Error\", \"uid\": -1}", uid)
 		return
 	}
 
@@ -69,7 +71,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	sess.Values["isAdmin"] = true
 	sess.Save(r, w)
 
-	http.Redirect(w, r, "/", 301)
+	response := make(map[string]string)
+
+	response["status"] = "ok"
+	response["message"] = "User created"
+	response["uid"] = strconv.Itoa(uid)
+
+	json.NewEncoder(w).Encode(response)
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -88,28 +96,36 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	sess.Options.MaxAge = -1
 	sess.Save(r, w)
 
-	http.Redirect(w, r, "/login", 301)
+	response := make(map[string]interface{})
+
+	response["status"] = "ok"
+	response["message"] = "Logged out"
+	response["uid"] = -1
+
+	json.NewEncoder(w).Encode(response)
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var (
-		uname       string
-		fname       string
-		email       string
-		password    string
-		passConfirm string
-		hash        []byte
-		err         error
+		uname    string
+		fname    string
+		email    string
+		password string
+		hash     []byte
+		err      error
 	)
 
 	uname = r.FormValue("uname")
 	fname = r.FormValue("fname")
 	email = r.FormValue("email")
 	password = r.FormValue("password")
-	passConfirm = r.FormValue("passConfirm")
 
-	if len(uname) > 2 && len(fname) > 0 && len(email) > 3 && len(password) > 8 && password == passConfirm {
-		http.Redirect(w, r, "/admin/users/add", 301)
+	if len(uname) < 2 && len(fname) < 1 && len(email) < 3 {
+		// Set bad request header
+		fmt.Fprintf(w, "{\"status\": \"error\", \"message\":\"Missing parameters\"}")
+		return
+	} else if len(password) < 8 {
+		fmt.Fprintf(w, "{\"status\": \"error\", \"message\":\"Password too short\"}")
 		return
 	}
 
@@ -141,8 +157,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	path := fmt.Sprintf("/admin/users/%d", lastId)
-	http.Redirect(w, r, path, 301)
+	fmt.Fprintf(w, "{\"status\": \"ok\", \"message\": \"User Created\", \"uid\": %d}", lastId)
 }
 
 func ListUsers(w http.ResponseWriter, r *http.Request) {
@@ -169,6 +184,12 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = rows.Err()
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(users)
 	if err != nil {
 		LogError(w, err)
 		return
