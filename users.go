@@ -17,15 +17,17 @@ type User struct {
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
 	Email    string `json:"email"`
+	Password string `json:"password,omitempty"`
 }
 
 type Users []User
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	var (
-		hash string
-		uid  int
-		err  error
+		hash  string
+		uid   int
+		err   error
+		creds User
 	)
 
 	if _, ok := CheckAuth(r); ok {
@@ -33,15 +35,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	credentials := struct {
-		email    string
-		password string
-	}{}
-
+	creds = User{}
 	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(&credentials)
+	err = decoder.Decode(&creds)
 
-	err = db.Conn.QueryRow("SELECT uid, password FROM users WHERE email = $1 AND enabled = TRUE", credentials.email).Scan(&uid, &hash)
+	err = db.Conn.QueryRow("SELECT uid, password FROM users WHERE email = $1 AND enabled = TRUE", creds.Email).Scan(&uid, &hash)
 
 	if err == sql.ErrNoRows {
 		// Timed derivation of valid email possible
@@ -54,7 +52,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(credentials.password))
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(creds.Password))
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -67,8 +65,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	claims := jwt.StandardClaims{
 		ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
 		Issuer:    "taquilla.uno",
-		Subject:   credentials.email,
+		Subject:   creds.Email,
 	}
+
+	// TODO: Add an ID to the jwt and save it on the database or
+	// in a shared cache
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 
 	// TODO: Use a configurable and secret key
@@ -84,6 +85,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
+	// TODO: invalidate the JWT
 	response := make(map[string]interface{})
 
 	response["status"] = "ok"
@@ -93,31 +95,26 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var (
-		uname    string
-		fname    string
-		email    string
-		password string
-		hash     []byte
-		err      error
+		hash  []byte
+		err   error
+		creds User
 	)
 
-	uname = r.FormValue("uname")
-	fname = r.FormValue("fname")
-	email = r.FormValue("email")
-	password = r.FormValue("password")
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&creds)
 
-	if len(uname) < 2 && len(fname) < 1 && len(email) < 3 {
+	if len(creds.name) < 2 && len(creds.fname) < 1 && len(creds.email) < 3 {
 		// Set bad request header
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "{\"error\":\"Missing parameters\"}")
 		return
-	} else if len(password) < 8 {
+	} else if len(creds.password) < 8 {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "{\"error\":\"Password too short\"}")
 		return
 	}
 
-	hash, err = bcrypt.GenerateFromPassword([]byte(password), 10)
+	hash, err = bcrypt.GenerateFromPassword([]byte(creds.password), 10)
 
 	if err != nil {
 		LogError(w, err)
@@ -126,12 +123,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	stmt, err := db.Conn.Prepare("INSERT INTO users(user_name, full_name, email, password) values($1, $2, $3, $4)")
 
+	// TODO: email already register error
 	if err != nil {
 		LogError(w, err)
 		return
 	}
 
-	res, err := stmt.Exec(uname, fname, email, string(hash))
+	res, err := stmt.Exec(creds.name, creds.fname, creds.email, string(hash))
 
 	if err != nil {
 		LogError(w, err)
@@ -145,7 +143,14 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "{\"status\": \"ok\", \"message\": \"User Created\", \"uid\": %d}", lastId)
+	creds.UID = lastId
+
+	resp := map[string]User{
+		"created": creds,
+	}
+
+	w.WriteHeader(StatusCreated)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func ListUsers(w http.ResponseWriter, r *http.Request) {
@@ -158,6 +163,7 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 		users Users
 	)
 
+	// TODO: Add pagination
 	rows, err := db.Conn.Query("SELECT uid, user_name, fullname, email FROM users WHERE enabled = 't' ORDER BY uid DESC")
 	if err != nil {
 		LogError(w, err)
@@ -167,7 +173,12 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		err = rows.Scan(&uid, &uname, &fname, &email)
-		user = User{}
+		user = User{
+			UID:      uid,
+			Name:     uname,
+			FullName: fname,
+			Email:    email,
+		}
 		users = append(users, user)
 	}
 
