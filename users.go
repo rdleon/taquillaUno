@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
-	"strconv"
+	"time"
 
-	"github.com/gorilla/sessions"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/rdleon/taquillaUno/db"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,25 +28,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		password string
 		hash     string
 		uid      int
-		sess     *sessions.Session
 		err      error
 	)
 
-	sess, err = Store.Get(r, "logged")
-
-	if err != nil {
-		LogError(w, err)
+	if _, ok := CheckAuth(r); ok {
+		fmt.Fprintf(w, "{\"loggedin\": true}")
 		return
 	}
 
-	tmp := sess.Values["uid"]
-
-	if tmp != nil {
-		// Already logged in
-		fmt.Fprintf(w, "{\"status\": \"ok\", \"uid\": %d}", tmp)
-		return
-	}
-
+	// TODO: We must receive and send json
 	email = r.FormValue("email")
 	password = r.FormValue("password")
 
@@ -53,9 +44,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	if err == sql.ErrNoRows {
 		// Timed derivation of valid email possible
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "{\"status\": \"Error\", \"uid\": -1}")
 		return
 	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		LogError(w, err)
 		return
 	}
@@ -63,44 +56,38 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 
 	if err != nil {
-		fmt.Fprintf(w, "{\"status\": \"Error\", \"uid\": -1}", uid)
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "{\"status\": \"Error\", \"uid\": -1}")
 		return
 	}
 
-	sess.Values["uid"] = uid
-	sess.Values["isAdmin"] = true
-	sess.Save(r, w)
-
 	response := make(map[string]string)
 
-	response["status"] = "ok"
-	response["message"] = "User created"
-	response["uid"] = strconv.Itoa(uid)
+	claims := jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
+		Issuer:    "taquilla.uno",
+		Subject:   email,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 
+	// TODO: Use a configurable and secret key
+	response["token"], err = token.SignedString([]byte("verysecretKey"))
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println("Error: ", err)
+		fmt.Fprintf(w, "{\"error\": \"Internal Server Error\"}")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	var (
-		sess *sessions.Session
-		err  error
-	)
-
-	sess, err = Store.Get(r, "logged")
-
-	if err != nil {
-		LogError(w, err)
-		return
-	}
-
-	sess.Options.MaxAge = -1
-	sess.Save(r, w)
-
 	response := make(map[string]interface{})
 
 	response["status"] = "ok"
-	response["message"] = "Logged out"
-	response["uid"] = -1
 
 	json.NewEncoder(w).Encode(response)
 }
