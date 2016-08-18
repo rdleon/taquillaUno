@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -24,11 +23,9 @@ type Users []User
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	var (
-		email    string
-		password string
-		hash     string
-		uid      int
-		err      error
+		hash string
+		uid  int
+		err  error
 	)
 
 	if _, ok := CheckAuth(r); ok {
@@ -36,11 +33,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: We must receive and send json
-	email = r.FormValue("email")
-	password = r.FormValue("password")
+	credentials := struct {
+		email    string
+		password string
+	}{}
 
-	err = db.Conn.QueryRow("SELECT uid, password FROM users WHERE email = $1 AND enabled = TRUE", email).Scan(&uid, &hash)
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&credentials)
+
+	err = db.Conn.QueryRow("SELECT uid, password FROM users WHERE email = $1 AND enabled = TRUE", credentials.email).Scan(&uid, &hash)
 
 	if err == sql.ErrNoRows {
 		// Timed derivation of valid email possible
@@ -53,7 +54,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(credentials.password))
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -66,7 +67,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	claims := jwt.StandardClaims{
 		ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
 		Issuer:    "taquilla.uno",
-		Subject:   email,
+		Subject:   credentials.email,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 
