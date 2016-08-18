@@ -3,29 +3,47 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 )
 
 func checkForAuth(inner http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var (
-			sess *sessions.Session
-			err  error
-		)
+		tokenStr := r.Header.Get("Authorization")
 
-		sess, err = Store.Get(r, "logged")
-
-		if err != nil {
-			LogError(w, err)
+		if tokenStr == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			fmt.Fprintf(w, "401 Unauthorized\n\n")
 			return
 		}
 
-		tmp := sess.Values["uid"]
+		i := strings.Index(tokenStr, "Bearer ")
 
-		if tmp != nil {
-			// Already logged in
+		if i >= 0 {
+			tokenStr = tokenStr[i+len("Bearer "):]
+		}
+
+		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method %v", token.Header["alg"])
+			}
+
+			// TODO: Save this in a config file
+			// and make it really secret
+			return []byte("verysecretKey"), nil
+		})
+
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			fmt.Fprintf(w, "401 Unauthorized\n\n")
+			return
+		}
+
+		if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			// Logged in, continue
+			// TODO: include parsed user info in request??
 			inner.ServeHTTP(w, r)
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
