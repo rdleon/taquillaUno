@@ -13,7 +13,7 @@ import (
 )
 
 type User struct {
-	UID      int    `json:"uid"`
+	UID      int64  `json:"uid"`
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
 	Email    string `json:"email"`
@@ -103,18 +103,18 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(&creds)
 
-	if len(creds.name) < 2 && len(creds.fname) < 1 && len(creds.email) < 3 {
+	if len(creds.Name) < 2 && len(creds.FullName) < 1 && len(creds.Email) < 3 {
 		// Set bad request header
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "{\"error\":\"Missing parameters\"}")
 		return
-	} else if len(creds.password) < 8 {
+	} else if len(creds.Password) < 8 {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "{\"error\":\"Password too short\"}")
 		return
 	}
 
-	hash, err = bcrypt.GenerateFromPassword([]byte(creds.password), 10)
+	hash, err = bcrypt.GenerateFromPassword([]byte(creds.Password), 10)
 
 	if err != nil {
 		LogError(w, err)
@@ -129,7 +129,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := stmt.Exec(creds.name, creds.fname, creds.email, string(hash))
+	res, err := stmt.Exec(creds.Name, creds.FullName, creds.Email, string(hash))
 
 	if err != nil {
 		LogError(w, err)
@@ -149,7 +149,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		"created": creds,
 	}
 
-	w.WriteHeader(StatusCreated)
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resp)
 }
 
@@ -174,7 +174,7 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		err = rows.Scan(&uid, &uname, &fname, &email)
 		user = User{
-			UID:      uid,
+			UID:      int64(uid),
 			Name:     uname,
 			FullName: fname,
 			Email:    email,
