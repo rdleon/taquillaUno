@@ -86,11 +86,16 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	// TODO: invalidate the JWT
-	response := map[string]string{
-		"loggedout": "ok",
+	if _, ok := CheckAuth(r); ok {
+		response := map[string]string{
+			"loggedout": "ok",
+		}
+
+		json.NewEncoder(w).Encode(response)
+		return
 	}
 
-	json.NewEncoder(w).Encode(response)
+	fmt.Fprintf(w, "{\"loggedin\": false}")
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
