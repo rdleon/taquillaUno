@@ -168,6 +168,12 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 		users Users
 	)
 
+	if _, ok := CheckAuth(r); !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
+		return
+	}
+
 	// TODO: Add pagination
 	rows, err := db.Conn.Query("SELECT uid, user_name, fullname, email FROM users WHERE enabled = 't' ORDER BY uid DESC")
 	if err != nil {
