@@ -9,17 +9,20 @@ import (
 )
 
 type Event struct {
-	ID        int       `json:"id"`
+	EID       int       `json:"eid"`
 	Name      string    `json:"name"`
-	Date      time.Time `json:"date"`
-	Duration  int       `json:"duraction"`
+	Start     time.Time `json:"start"`
+	Duration  int       `json:"duration"`
+	Created   time.Time `json:"created"`
 	Published bool      `json:"published"`
 }
 
 type Events []Event
 
 func listEvents(page int) Events {
-	rows, err := db.Conn.Query("SELECT name, date, duration, published FROM events ORDER BY published desc LIMIT 25")
+	rows, err := db.Conn.Query("SELECT name, start, duration, published" +
+		" FROM events ORDER BY published desc LIMIT 25",
+	)
 
 	if err != nil {
 		log.Fatal(err)
@@ -31,7 +34,7 @@ func listEvents(page int) Events {
 
 	for rows.Next() {
 		var event Event
-		err = rows.Scan(&(event.Name), &(event.Date), &(event.Duration), &(event.Published))
+		err = rows.Scan(&(event.Name), &(event.Start), &(event.Duration), &(event.Published))
 		events = append(events, event)
 	}
 
