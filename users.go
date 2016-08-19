@@ -86,9 +86,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	// TODO: invalidate the JWT
-	response := make(map[string]interface{})
-
-	response["status"] = "ok"
+	response := map[string]string{
+		"loggedout": "ok",
+	}
 
 	json.NewEncoder(w).Encode(response)
 }
