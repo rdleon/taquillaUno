@@ -133,7 +133,6 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 		"events": events,
 	}
 
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	json.NewEncoder(w).Encode(resp)
 }
 
