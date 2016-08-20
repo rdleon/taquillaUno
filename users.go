@@ -72,8 +72,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// in a shared cache
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 
-	// TODO: Use a configurable and secret key
-	response["token"], err = token.SignedString([]byte("verysecretKey"))
+	response["token"], err = token.SignedString([]byte(Conf["secret"]))
 
 	if err != nil {
 		LogError(w, err)

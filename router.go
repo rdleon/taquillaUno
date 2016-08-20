@@ -27,8 +27,7 @@ func CheckAuth(r *http.Request) (string, bool) {
 			return nil, fmt.Errorf("Unexpected signing method %v", token.Header["alg"])
 		}
 
-		// TODO: change this key!!!
-		return []byte("verysecretKey"), nil
+		return []byte(Conf["secret"]), nil
 	})
 
 	if err != nil {
