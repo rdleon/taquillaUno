@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -114,6 +115,13 @@ func listEvents() (events Events, err error) {
 }
 
 func ListEvents(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	if _, ok := CheckAuth(r); !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
+		return
+	}
+
 	events, err := listEvents()
 
 	if err != nil {
@@ -131,10 +139,27 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 
 func AddEvent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	if _, ok := CheckAuth(r); !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
+		return
+	}
 }
 
 func UpdateEvent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	if _, ok := CheckAuth(r); !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
+		return
+	}
 }
 
 func DeleteEvent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	if _, ok := CheckAuth(r); !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
+		return
+	}
 }
