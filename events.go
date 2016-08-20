@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/rdleon/taquillaUno/db"
 )
 
@@ -143,6 +144,30 @@ func AddEvent(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
 		return
 	}
+	var event Event
+
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&event)
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	// TODO: validate input
+	err = event.Save()
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	resp := map[string]int{
+		"eid": event.EID,
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func UpdateEvent(w http.ResponseWriter, r *http.Request) {
@@ -152,6 +177,44 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
 		return
 	}
+
+	vars := mux.Vars(r)
+	if key, ok := vars["eventId"]; ok {
+		var event Event
+
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&event)
+
+		if string(event.EID) != key {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, `{"error": "Bad Request"}`)
+			return
+		}
+
+		if err != nil {
+			LogError(w, err)
+			return
+		}
+
+		// TODO: validate input
+		// Get EID from request
+		err = event.Save()
+
+		if err != nil {
+			LogError(w, err)
+			return
+		}
+
+		resp := map[string]int{
+			"eid": event.EID,
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(resp)
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprintf(w, `{"error": "Not Found"}`)
 }
 
 func DeleteEvent(w http.ResponseWriter, r *http.Request) {
@@ -161,4 +224,41 @@ func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
 		return
 	}
+
+	vars := mux.Vars(r)
+	if key, ok := vars["eventId"]; ok {
+		var event Event
+
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&event)
+
+		if string(event.EID) != key {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, `{"error": "Bad Request"}`)
+			return
+		}
+
+		if err != nil {
+			LogError(w, err)
+			return
+		}
+
+		// TODO: validate input
+		// Get EID from request
+		err = event.Delete()
+		if err != nil {
+			LogError(w, err)
+			return
+		}
+
+		resp := map[string]int{
+			"deleted": event.EID,
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(resp)
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprintf(w, `{"error": "Not Found"}`)
 }
