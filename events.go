@@ -46,7 +46,18 @@ func listEvents() (events Events, err error) {
 	return
 }
 
-func loadEvent(id int) {
+func loadEvent(eid int) (event Event, err error) {
+	err = db.Conn.QueryRow(
+		"SELECT name, start, duration, created, published FROM events WHERE eid = $1",
+		eid).Scan(&(event.Name), &(event.Start), &(event.Duration), &(event.Created), &(event.Published))
+
+	if err != nil {
+		return
+	}
+
+	event.EID = eid
+	return
+
 }
 
 func saveEvent(event Event) {
