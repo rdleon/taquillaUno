@@ -71,6 +71,12 @@ func (event Event) Save() (err error) {
 	return
 }
 
+func (event Event) Delete() (err error) {
+	_, err = db.Conn.Query("DELETE FROM events WHERE eid = $1", event.EID)
+
+	return
+}
+
 // List the first 25 users found in the database
 func listEvents() (events Events, err error) {
 	// TODO: Add pagination
