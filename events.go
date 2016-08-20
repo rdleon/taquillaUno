@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -20,7 +19,9 @@ type Event struct {
 
 type Events []Event
 
-func listEvents(page int) (events Events, err error) {
+// List the first 25 users found in the database
+func listEvents() (events Events, err error) {
+	// TODO: Add pagination
 	rows, err := db.Conn.Query("SELECT eid, name, start, duration, created, published" +
 		" FROM events ORDER BY published desc LIMIT 25",
 	)
