@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -19,26 +20,29 @@ type Event struct {
 
 type Events []Event
 
-func listEvents(page int) Events {
-	rows, err := db.Conn.Query("SELECT name, start, duration, published" +
+func listEvents(page int) (events Events, err error) {
+	rows, err := db.Conn.Query("SELECT eid, name, start, duration, created, published" +
 		" FROM events ORDER BY published desc LIMIT 25",
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	defer rows.Close()
 
-	var events Events = make([]Event, 0)
+	events = make([]Event, 0)
 
 	for rows.Next() {
 		var event Event
-		err = rows.Scan(&(event.Name), &(event.Start), &(event.Duration), &(event.Published))
+		err = rows.Scan(&(event.EID), &(event.Name), &(event.Start), &(event.Duration), &(event.Created), &(event.Published))
+		if err != nil {
+			break
+		}
 		events = append(events, event)
 	}
 
-	return events
+	return
 }
 
 func loadEvent(id int) {
@@ -48,7 +52,19 @@ func saveEvent(event Event) {
 }
 
 func ListEvents(w http.ResponseWriter, r *http.Request) {
+	events, err := listEvents()
+
+	if err != nil {
+		LogError(w, err)
+		return
+	}
+
+	resp := map[string]Events{
+		"events": events,
+	}
+
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+	json.NewEncoder(w).Encode(resp)
 }
 
 func AddEvent(w http.ResponseWriter, r *http.Request) {
