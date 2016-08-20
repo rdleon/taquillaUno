@@ -26,7 +26,10 @@ func main() {
 		"secret":    "secretkeyVerySecret",
 	}
 
-	dbConf := fmt.Sprintf("user=%s dbname=%s password=%s", Conf["db_user"], Conf["db_name"], Conf["db_passwd"])
+	dbConf := fmt.Sprintf(
+		"user=%s dbname=%s password=%s",
+		Conf["db_user"], Conf["db_name"], Conf["db_passwd"],
+	)
 	db.Conn, err = sql.Open("postgres", dbConf)
 
 	if err != nil {

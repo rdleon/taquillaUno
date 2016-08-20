@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -73,8 +74,14 @@ func (event Event) Save() (err error) {
 	return
 }
 
-func (event Event) Delete() (err error) {
-	_, err = db.Conn.Query("DELETE FROM events WHERE eid = $1", event.EID)
+// Validates all the fields in an event
+func (event Event) Validate() (err error) {
+	return
+}
+
+// Deletes an event of the DB if it exists
+func RemoveEvent(eid int) (err error) {
+	_, err = db.Conn.Query("DELETE FROM events WHERE eid = $1", eid)
 
 	return
 }
@@ -185,6 +192,7 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(&event)
 
+		// Get EID from request URL
 		if string(event.EID) != key {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, `{"error": "Bad Request"}`)
@@ -196,8 +204,14 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// TODO: validate input
-		// Get EID from request
+		// Validate input
+		if err = event.Validate(); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, `{"error": "Bad Request"}`)
+			LogError(w, err)
+			return
+		}
+
 		err = event.Save()
 
 		if err != nil {
@@ -211,6 +225,7 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(http.StatusAccepted)
 		json.NewEncoder(w).Encode(resp)
+		return
 	}
 
 	w.WriteHeader(http.StatusNotFound)
@@ -221,42 +236,33 @@ func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	if _, ok := CheckAuth(r); !ok {
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
+		fmt.Fprintf(w, `{"error": "Unauthorized"}`)
 		return
 	}
 
 	vars := mux.Vars(r)
 	if key, ok := vars["eventId"]; ok {
-		var event Event
-
-		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(&event)
-
-		if string(event.EID) != key {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, `{"error": "Bad Request"}`)
-			return
-		}
-
+		eid, err := strconv.Atoi(key)
 		if err != nil {
-			LogError(w, err)
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, `{"error": "Wrong event id"}`)
 			return
 		}
 
-		// TODO: validate input
-		// Get EID from request
-		err = event.Delete()
+		err = RemoveEvent(eid)
+
 		if err != nil {
 			LogError(w, err)
 			return
 		}
 
 		resp := map[string]int{
-			"deleted": event.EID,
+			"deleted": eid,
 		}
 
 		w.WriteHeader(http.StatusAccepted)
 		json.NewEncoder(w).Encode(resp)
+		return
 	}
 
 	w.WriteHeader(http.StatusNotFound)
