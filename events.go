@@ -124,11 +124,6 @@ func listEvents() (events Events, err error) {
 
 func ListEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	if _, ok := CheckAuth(r); !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
-		return
-	}
 
 	events, err := listEvents()
 
@@ -145,12 +140,6 @@ func ListEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddEvent(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	if _, ok := CheckAuth(r); !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
-		return
-	}
 	var event Event
 
 	decoder := json.NewDecoder(r.Body)
@@ -173,19 +162,14 @@ func AddEvent(w http.ResponseWriter, r *http.Request) {
 		"eid": event.EID,
 	}
 
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resp)
 }
 
 func UpdateEvent(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	if _, ok := CheckAuth(r); !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, "{\"error\": \"Unauthorized\"}")
-		return
-	}
-
 	vars := mux.Vars(r)
+
 	if key, ok := vars["eventId"]; ok {
 		var event Event
 
@@ -228,18 +212,12 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprintf(w, `{"error": "Not Found"}`)
 }
 
 func DeleteEvent(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
-	if _, ok := CheckAuth(r); !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, `{"error": "Unauthorized"}`)
-		return
-	}
-
 	vars := mux.Vars(r)
 	if key, ok := vars["eventId"]; ok {
 		eid, err := strconv.Atoi(key)
@@ -265,6 +243,7 @@ func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprintf(w, `{"error": "Not Found"}`)
 }
