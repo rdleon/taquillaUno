@@ -162,7 +162,6 @@ func AddEvent(w http.ResponseWriter, r *http.Request) {
 		"eid": event.EID,
 	}
 
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resp)
 }
@@ -212,7 +211,6 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprintf(w, `{"error": "Not Found"}`)
 }
@@ -243,7 +241,6 @@ func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprintf(w, `{"error": "Not Found"}`)
 }

@@ -43,14 +43,16 @@ func CheckAuth(r *http.Request) (string, bool) {
 
 func checkForAuth(inner http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 
 		if _, ok := CheckAuth(r); ok {
-			// TODO: include parsed user info in request??
+			// TODO: Include parsed user info in request
 			inner.ServeHTTP(w, r)
 			return
 		}
+
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, "401 Unauthorized\n\n")
+		fmt.Fprintf(w, `{"error": "Unauthorized"}`)
 	})
 }
 

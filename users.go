@@ -30,6 +30,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		creds User
 	)
 
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
+
 	if _, ok := CheckAuth(r); ok {
 		fmt.Fprintf(w, "{\"loggedin\": true}")
 		return
@@ -84,17 +86,19 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	// TODO: invalidate the JWT
+
 	if _, ok := CheckAuth(r); ok {
 		response := map[string]string{
-			"loggedout": "ok",
+			"logout": "ok",
 		}
 
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	fmt.Fprintf(w, "{\"loggedin\": false}")
+	fmt.Fprintf(w, `{"logout": "ok"}`)
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
