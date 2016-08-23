@@ -168,6 +168,8 @@ func AddEvent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+// TODO: Add get (single) event
+
 func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 

@@ -208,3 +208,5 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// TODO: Add Update, Get and Delete users

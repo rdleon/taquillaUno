@@ -69,4 +69,32 @@ var routes = Routes{
 		true,
 		DeleteEvent,
 	},
+	Route{
+		"ListVenues",
+		"GET",
+		"/api/venues",
+		true,
+		ListVenues,
+	},
+	Route{
+		"AddVenues",
+		"POST",
+		"/api/venues",
+		true,
+		AddVenue,
+	},
+	Route{
+		"UpdateVenue",
+		"PUT",
+		"/api/venues/{venueId}",
+		true,
+		UpdateVenue,
+	},
+	Route{
+		"DeleteVenue",
+		"DELETE",
+		"/api/venues/{venueId}",
+		true,
+		DeleteVenue,
+	},
 }
