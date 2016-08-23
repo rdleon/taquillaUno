@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rdleon/taquillaUno/db"
@@ -25,10 +24,10 @@ func getVenue(vid int) (venue Venue, err error) {
 		"SELECT name, desc, ubication, coords FROM venues WHERE vid = $1",
 		vid,
 	).Scan(
-		&(venues.Name),
-		&(venues.Desc),
-		&(venues.Ubication),
-		&(venues.Coords),
+		&(venue.Name),
+		&(venue.Desc),
+		&(venue.Ubication),
+		&(venue.Coords),
 	)
 
 	if err != nil {
@@ -52,7 +51,7 @@ func (venue Venue) Save() (err error) {
 		).Scan(&venue.VID)
 
 		if err != nil {
-			venues.VID = -1
+			venue.VID = -1
 		}
 	} else {
 		_, err = db.Conn.Query(
@@ -125,7 +124,7 @@ func ListVenues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := map[string][]Venues{
+	resp := map[string][]Venue{
 		"venues": venues,
 	}
 
@@ -158,6 +157,8 @@ func AddVenue(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resp)
 }
+
+// TODO: Add get venue
 
 func UpdateVenue(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
