@@ -14,6 +14,8 @@ import (
 type Event struct {
 	EID       int       `json:"eid"`
 	Name      string    `json:"name"`
+	Desc      string    `json:"desc"`
+	Venue     string    `json:"venue"`
 	Start     time.Time `json:"start"`
 	Duration  int       `json:"duration"`
 	Created   time.Time `json:"created"`
