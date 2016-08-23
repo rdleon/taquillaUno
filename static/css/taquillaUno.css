@@ -63,3 +63,12 @@ label {
 .hidden {
   display: none;
 }
+
+form label {
+  text-align: center;
+}
+
+#content form textarea {
+  width: 229px;
+  height: 105px;
+}
