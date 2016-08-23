@@ -59,3 +59,7 @@ label {
   display: block;
   text-align: right;
 }
+
+.hidden {
+  display: none;
+}

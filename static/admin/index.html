@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/css/taquillaUno.css">
+    <script type="/js/libutil.js">
+    </script>
+    <script type="/js/admin.js">
+    </script>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="header">
+        <h1>TaquillaUNO</h1>
+      </div>
+      <div class="main">
+        <div class="box sidebar">
+          <ul id="menu">
+            <li>Eventos</li>
+            <li>Usuarios</li>
+          </ul>
+        </div>
+        <div id="content" class="box content">
+          <form >
+            <h3>Title</h3>
+            <label for="title">
+              Evento:
+              <input type="text" name="title" value="" />
+            </label>
+            <label for="description">
+              Descripción:
+            </label>
+            <textarea name="description"></textarea>
+            <label for="venue">
+              Ubicación:
+              <!-- Use select2 -->
+              <select name="venue">
+                <option value="0">Teatro de la ciudad</option>
+                <option value="1">Centro Cultural</option>
+                <option value="1">Cinemex</option>
+              </select>
+            </label>
+            <label for="start">
+              Inicio:
+              <input type="time" name="startTime" value="" />
+              <input type="date" name="startDate" value="" />
+            </label>
+            <label for="duration">
+              Duración:
+              <input type="number" name="duration" value="" />
+              Minutos
+            </label>
+            <label for="published">
+              Publicado:
+              <input type="checkbox" name="published">
+            </label>
+            <div class="photos">
+             <!-- Add photos -->
+            </div>
+          </form>
+        </div>
+        <div class="box sidebar">
+        </div>
+      </div>
+      <div class="footer">
+        2016 &copy; TaquillaUNO
+      </div>
+    </div>
+  </body>
+</html>
