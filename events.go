@@ -192,31 +192,23 @@ func UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Validate input
-		if err = event.Validate(); err != nil {
+		if err := event.Validate(); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, `{"error": "Bad Request"}`)
-			LogError(w, err)
 			return
 		}
 
-		err = event.Save()
-
-		if err != nil {
+		if err := event.Save(); err != nil {
 			LogError(w, err)
 			return
-		}
-
-		resp := map[string]int{
-			"eid": event.EID,
 		}
 
 		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(resp)
-		return
+		fmt.Fprintf(w, `{"eid": %d}`, event.EID)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"error": "Not Found"}`)
 	}
-
-	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintf(w, `{"error": "Not Found"}`)
 }
 
 func DeleteEvent(w http.ResponseWriter, r *http.Request) {
@@ -236,15 +228,10 @@ func DeleteEvent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		resp := map[string]int{
-			"deleted": eid,
-		}
-
 		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(resp)
-		return
+		fmt.Fprintf(w, `{"deleted": %d}`, eid)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"error": "Not Found"}`)
 	}
-
-	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintf(w, `{"error": "Not Found"}`)
 }
