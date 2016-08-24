@@ -5,22 +5,43 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 	"github.com/rdleon/taquillaUno/db"
 	"golang.org/x/crypto/bcrypt"
 )
 
+type Role struct {
+	RID  int64  `json:"rid"`
+	name string `json:"name"`
+}
+
 type User struct {
-	UID      int64  `json:"uid"`
+	UID      int    `json:"uid"`
 	Name     string `json:"name"`
 	FullName string `json:"full_name"`
 	Email    string `json:"email"`
 	Password string `json:"password,omitempty"`
+	Roles    Role   `json:"role"`
 }
 
 type Users []User
+
+func (user User) Save() (err error) {
+	return
+}
+
+func (user User) Validate() (err error) {
+	// TODO(rdleon): Fill validation
+	return
+}
+
+func RemoveUser(uid int64) (err error) {
+	return
+}
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	var (
@@ -137,28 +158,16 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := stmt.Exec(creds.Name, creds.FullName, creds.Email, string(hash))
+	_, err = stmt.Exec(creds.Name, creds.FullName, creds.Email, string(hash))
 
 	if err != nil {
 		LogError(w, err)
 		return
 	}
 
-	lastId, err := res.LastInsertId()
-
-	if err != nil {
-		LogError(w, err)
-		return
-	}
-
-	creds.UID = lastId
-
-	resp := map[string]User{
-		"created": creds,
-	}
-
+	creds.Password = ""
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(creds)
 }
 
 func ListUsers(w http.ResponseWriter, r *http.Request) {
@@ -188,7 +197,7 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		err = rows.Scan(&uid, &uname, &fname, &email)
 		user = User{
-			UID:      int64(uid),
+			UID:      uid,
 			Name:     uname,
 			FullName: fname,
 			Email:    email,
@@ -210,3 +219,88 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO: Add Update, Get and Delete users
+func GetUser(w http.ResponseWriter, r *http.Request) {
+	var usr User
+
+	vars := mux.Vars(r)
+
+	if uid, ok := vars["userId"]; ok {
+		err := db.Conn.QueryRow(`SELECT user_name, full_name, email
+			FROM users WHERE uid = $1`,
+			uid,
+		).Scan(
+			&(usr.Name),
+			&(usr.FullName),
+			&(usr.Email),
+		)
+
+		usr.UID, err = strconv.Atoi(uid)
+
+		if err != nil {
+			LogError(w, err)
+			return
+		}
+
+		json.NewEncoder(w).Encode(usr)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"error": "Not Found"}`)
+	}
+}
+
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	if _, ok := vars["userId"]; ok {
+		var usr User
+
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&usr)
+
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, `{"error": "Bad Request"}`)
+			return
+		}
+
+		if err := usr.Validate(); err != nil {
+			LogError(w, err)
+			return
+		}
+
+		if err := usr.Save(); err != nil {
+			LogError(w, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+		fmt.Fprintf(w, `{"uid": %d}`, usr.UID)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"error": "Not Found"}`)
+	}
+}
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	if key, ok := vars["userId"]; ok {
+		uid, err := strconv.Atoi(key)
+
+		if err != nil {
+			LogError(w, err)
+			return
+		}
+
+		if err := RemoveEvent(uid); err != nil {
+			LogError(w, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+		fmt.Fprintf(w, `{"deleted": %d}`, uid)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, `{"error": "Not Found"}`)
+	}
+}

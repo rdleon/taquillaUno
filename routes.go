@@ -42,6 +42,27 @@ var routes = Routes{
 		CreateUser,
 	},
 	Route{
+		"GetUser",
+		"GET",
+		"/api/users/{userId}",
+		true,
+		GetUser,
+	},
+	Route{
+		"UpdateUser",
+		"PUT",
+		"/api/users/{userId}",
+		true,
+		UpdateUser,
+	},
+	Route{
+		"DeleteUser",
+		"DELETE",
+		"/api/users/{userId}",
+		true,
+		GetUser,
+	},
+	Route{
 		"ListEvents",
 		"GET",
 		"/api/events",
