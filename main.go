@@ -58,5 +58,12 @@ func LogError(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(w, "{\"error\": \"Internal Server Error\"}")
-	log.Println("Server error", err)
+	log.Println("Server error: ", err)
+}
+
+func LogNotFound(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprintf(w, `{"error": "Not Found"}`)
+	// TODO: log the URL
+	log.Println("Not Found: ")
 }
