@@ -65,7 +65,8 @@ func (user User) Validate() (err error) {
 	return
 }
 
-func RemoveUser(uid int64) (err error) {
+func RemoveUser(uid int) (err error) {
+	_, err = db.Conn.Query("DELETE FROM users WHERE uid = $1", uid)
 	return
 }
 
