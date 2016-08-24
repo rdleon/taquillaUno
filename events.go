@@ -48,7 +48,7 @@ func getEvent(eid int) (event Event, err error) {
 
 // Creates and updates an event in the database
 func (event Event) Save() (err error) {
-	if event.EID > 0 {
+	if event.EID < 0 {
 		err = db.Conn.QueryRow(
 			"INSERT INTO events(name, start, duration, created, published) VALUES($1, $2, $3, $4, $5) RETURNING eid;",
 			event.Name,
