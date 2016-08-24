@@ -31,6 +31,32 @@ type User struct {
 type Users []User
 
 func (user User) Save() (err error) {
+	if user.UID < 0 {
+		// NEW user
+		err = db.Conn.QueryRow(
+			`INSERT INTO users(full_name, user_name, email)
+			VALUES($1, $2, $3)
+			RETURNING uid;`,
+			user.FullName,
+			user.Name,
+			user.Email,
+		).Scan(user.UID)
+
+		if err != nil {
+			user.UID = -1
+		}
+	} else {
+		// Update an existing user
+		_, err = db.Conn.Query(
+			`UPDATE users SET full_name = $1, user_name = $2, email = $3
+			WHERE uid = $4;`,
+			user.FullName,
+			user.Name,
+			user.Email,
+			user.UID,
+		)
+	}
+
 	return
 }
 
