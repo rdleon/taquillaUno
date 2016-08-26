@@ -22,10 +22,10 @@ type Role struct {
 type User struct {
 	UID      int    `json:"uid"`
 	Name     string `json:"name"`
-	FullName string `json:"full_name"`
 	Email    string `json:"email"`
+	FullName string `json:"full_name"`
 	Password string `json:"password,omitempty"`
-	Roles    Role   `json:"role"`
+	Roles    []Role `json:"role"`
 }
 
 type Users []User
