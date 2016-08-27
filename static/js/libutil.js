@@ -53,7 +53,7 @@ HTTP.prototype.request = function (method, url, body, success, failure) {
                     success({});
                 }
 
-            } else if (isFunction(failure) && xhr.status >= 400) {
+            } else if (isFunction(failure) && xhr.readyState > 3 && xhr.status >= 400) {
                 if (xhr.responseText) {
                     resp = JSON.parse(xhr.responseText);
                     failure(xhr.status, resp);
