@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="/css/taquillaUno.css">
-    <script type="/js/libutil.js">
+    <script src="/js/libutil.js">
     </script>
-    <script type="/js/admin.js">
+    <script src="/js/admin.js">
     </script>
   </head>
   <body>
@@ -21,8 +21,17 @@
           </ul>
         </div>
         <div id="content" class="box content">
-          <form >
-            <h3>Title</h3>
+          <form id="loginForm">
+            <label for="email">
+              <input placeholder="E-mail" type="email" name="email" value="" />
+            </label>
+            <label for="password">
+              <input placeholder="Password" type="password" name="password" value="" />
+            </label>
+            <input type="submit" name="login" value="Log In" />
+          </form>
+          <form id="eventForm">
+            <h3>Add Event</h3>
             <label for="title">
               Evento:
               <input type="text" name="title" value="" />
@@ -35,6 +44,7 @@
               Ubicación:
               <!-- Use select2 -->
               <select name="venue">
+                <!-- Load from API -->
                 <option value="0">Teatro de la ciudad</option>
                 <option value="1">Centro Cultural</option>
                 <option value="1">Cinemex</option>
@@ -57,6 +67,22 @@
             <div class="photos">
              <!-- Add photos -->
             </div>
+          </form>
+          <!-- -->
+          <form id="userForm">
+            <h3>Add User</h3>
+            <label for="name">
+              Nombre corto:
+              <input type="text" name="name" value="" />
+            </label>
+            <label for="fname">
+              Nombre completo:
+              <input type="text" name="fname" value="" />
+            </label>
+            <label for="email">
+              Correo electrónico:
+              <input type="email" name="email" value="" />
+            </label>
           </form>
         </div>
         <div class="box sidebar">
