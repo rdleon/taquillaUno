@@ -34,8 +34,8 @@ func (user User) Save() (err error) {
 	if user.UID < 0 {
 		// NEW user
 		err = db.Conn.QueryRow(
-			`INSERT INTO users(full_name, user_name, email)
-			VALUES($1, $2, $3)
+			`INSERT INTO users(full_name, user_name, email, enabled)
+			VALUES($1, $2, $3, 't')
 			RETURNING uid;`,
 			user.FullName,
 			user.Name,
@@ -66,7 +66,7 @@ func (user User) Validate() (err error) {
 }
 
 func RemoveUser(uid int) (err error) {
-	_, err = db.Conn.Query("DELETE FROM users WHERE uid = $1", uid)
+	_, err = db.Conn.Query("UPDATE users SET enabled = 'f' WHERE uid = $1", uid)
 	return
 }
 
@@ -253,7 +253,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 
 	if uid, ok := vars["userId"]; ok {
 		err := db.Conn.QueryRow(`SELECT user_name, full_name, email
-			FROM users WHERE uid = $1`,
+			FROM users WHERE enabled = 't' AND uid = $1`,
 			uid,
 		).Scan(
 			&(usr.Name),
