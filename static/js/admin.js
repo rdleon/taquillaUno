@@ -2,20 +2,52 @@
 
 function run() {
     var container,
+        http,
         menu,
         loggedIn = false,
         forms = {};
 
     menu = document.getElementById('menu');
     container = document.getElementById('container');
+    http = new HTTP();
 
     function initLoginForm(form) {
+        function onLogin(res) {
+            if (res.token) {
+                http.setJWT(res.token);
+                loggedIn = true;
+                showForm('event');
+            }
+        }
+
+        function onLoginFail(status, res) {
+            console.log(status, res);
+        }
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            var usrInfo = {
+                'email': '',
+                'password': ''
+                };
+
+            usrInfo.email = form.querySelector('input[name="email"]').value;
+            usrInfo.password = form.querySelector('input[name="password"]').value;
+
+            http.post('/api/login', usrInfo, onLogin, onLoginFail);
+        });
     }
 
     function initUserForm(form) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+        });
     }
 
     function initEventForm(form) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+        });
     }
 
     function init() {
