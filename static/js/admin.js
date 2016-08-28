@@ -12,11 +12,15 @@ function run() {
     http = new HTTP();
 
     /**
-     * Defines the basic functionality for
-     * the login form
+     * Defines the basic functionality for the login form
      * @param {element} form - The DOM representation of the form
      */
     function initLoginForm(form) {
+        /**
+         * Callback for login, gets the JWT and sets it in the http lib,
+         * also sets the logged In flag, activates the menu and shows the
+         * next step in the UI
+         */
         function onLogin(res) {
             if (res.token) {
                 http.setJWT(res.token);
@@ -25,6 +29,10 @@ function run() {
             }
         }
 
+        /**
+         * Callback for login failure, notifies the user that the login
+         * attempt was unsuccesful and gives the reason (credentials, server error)
+         */
         function onLoginFail(status, res) {
             // TODO(rdleon): show failure message
             console.log(status, res);
@@ -57,7 +65,7 @@ function run() {
 
     /**
      * Defines the basic functionality for the user form
-     * for adding and modifying users.
+     * for adding and modifying events.
      * @param {element} form - The DOM representation of the form
      */
     function initEventForm(form) {
