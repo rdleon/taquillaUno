@@ -4,7 +4,7 @@ function run() {
     var http,
         menu,
         loggedIn = false,
-        forms = {};
+        pages = {};
 
     /**
      * Defines the basic functionality for the login form
@@ -20,7 +20,7 @@ function run() {
             if (res.token) {
                 http.setJWT(res.token);
                 loggedIn = true;
-                showForm('event');
+                showPage('event');
             }
         }
 
@@ -30,6 +30,7 @@ function run() {
          */
         function onLoginFail(status, res) {
             // TODO(rdleon): show failure message
+            form.querySelector('input[name="password"]').value = '';
             console.log(status, res);
         }
 
@@ -64,23 +65,31 @@ function run() {
      * @param {element} form - The DOM representation of the form
      */
     function initEventForm(form) {
+        var today = new Date();
+
+        // Set defaults
+        form.querySelector('input[name="duration"]').value = 120;
+        form.querySelector('input[name="startTime"]').value = '18:00';
+        form.querySelector('input[name="startDate"]').value = today.getFullYear() + '-01-01';
+
         form.addEventListener('submit', function (event) {
             event.preventDefault();
         });
     }
 
     /**
-     * Used to select which form to show at any given time in the UI
-     * @param {string} formName - The name of the form to show
+     * Used to select which page to show at any given time in the UI
+     * @param {string} pageName - The name of the page to show
      */
-    function showForm(formName) {
+    function showPage(pageId) {
+        var id;
         // Toggle hidden in the selected form
         // hide all others.
-        for (name in forms) {
-           if (name == formName) {
-               removeClass(forms[name], "hidden");
-           } else {
-               addClass(forms[name], "hidden")
+        for (id in pages) {
+           if (id == pageId) {
+               removeClass(pages[id], "hidden");
+           } else if (pages[id]) {
+               addClass(pages[id], "hidden")
            }
        }
     }
@@ -94,18 +103,19 @@ function run() {
 
         menu = document.getElementById('menu');
 
-        forms.login = document.getElementById('loginForm');
-        forms.user = document.getElementById('userForm');
-        forms.event = document.getElementById('eventForm');
+        pages.login = document.getElementById('loginForm');
+        pages.user = document.getElementById('userForm');
+        pages.event = document.getElementById('eventForm');
+        pages.userList = document.getElementById('userList');
 
-        initLoginForm(forms.login);
-        initUserForm(forms.user);
-        initEventForm(forms.event);
+        initLoginForm(pages.login);
+        initUserForm(pages.user);
+        initEventForm(pages.event);
 
         if (!loggedIn) {
-            showForm('login');
+            showPage('login');
         } else {
-            showForm('event');
+            showPage('event');
         }
     }
 
