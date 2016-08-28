@@ -72,8 +72,43 @@ function run() {
         form.querySelector('input[name="startTime"]').value = '18:00';
         form.querySelector('input[name="startDate"]').value = today.getFullYear() + '-01-01';
 
+        function onAdd(ret) {
+            // TODO(rdleon): Handle return
+            console.log('Add event success: ', status, ret);
+        }
+
+        function onAddFail(status, ret) {
+            // TODO(rdleon): Handle return errors
+            console.log('Add event failed: ', status, ret);
+        }
+
         form.addEventListener('submit', function (event) {
             event.preventDefault();
+            var title, valid, event;
+
+            title = form.querySelector('input[name="title"]');
+            valid = true;
+
+            // TODO(rdleon): Validate the rest of the info
+            if (title.value.trim().length === 0) {
+                addClass(title, 'missing');
+                valid = false;
+            } else {
+                event.title = title.value.trim();
+            }
+
+            if (valid) {
+                // TODO(rdleon): Add the real info
+                event = {
+                    title: title.value.trim(),
+                    desc: '',
+                    venueId: 0,
+                    start: today.getTime(),
+                    duration: 120,
+                    published: true
+                };
+                http.post('/api/events', event, onAdd, onAddFail);
+            }
         });
     }
 
