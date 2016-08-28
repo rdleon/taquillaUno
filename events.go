@@ -27,10 +27,11 @@ type Events []Event
 // Returns the event eid from the database
 func getEvent(eid int) (event Event, err error) {
 	err = db.Conn.QueryRow(
-		"SELECT name, start, duration, created, published FROM events WHERE eid = $1",
+		"SELECT name, descr, start, duration, created, published FROM events WHERE eid = $1",
 		eid,
 	).Scan(
 		&(event.Name),
+		&(event.Desc),
 		&(event.Start),
 		&(event.Duration),
 		&(event.Created),
@@ -50,8 +51,9 @@ func getEvent(eid int) (event Event, err error) {
 func (event Event) Save() (err error) {
 	if event.EID < 0 {
 		err = db.Conn.QueryRow(
-			"INSERT INTO events(name, start, duration, created, published) VALUES($1, $2, $3, $4, $5) RETURNING eid;",
+			"INSERT INTO events(name, descr, start, duration, created, published) VALUES($1, $2, $3, $4, $5, $6) RETURNING eid;",
 			event.Name,
+			event.Desc,
 			event.Start,
 			event.Duration,
 			event.Created,
@@ -63,8 +65,9 @@ func (event Event) Save() (err error) {
 		}
 	} else {
 		_, err = db.Conn.Query(
-			"UPDATE events SET name = $1, start = $2, duration = $3, created = $4, published = $5 WHERE eid = $6",
+			"UPDATE events SET name = $1, descr = $2, start = $3, duration = $4, created = $5, published = $6 WHERE eid = $7",
 			event.Name,
+			event.Desc,
 			event.Start,
 			event.Duration,
 			event.Created,
@@ -92,7 +95,7 @@ func RemoveEvent(eid int) (err error) {
 func listEvents() (events Events, err error) {
 	// TODO: Add pagination
 	rows, err := db.Conn.Query(
-		`SELECT eid, name, start, duration, created, published
+		`SELECT eid, name, descr, start, duration, created, published
 		 FROM events ORDER BY published desc LIMIT 25`)
 
 	if err != nil {
@@ -108,6 +111,7 @@ func listEvents() (events Events, err error) {
 		err = rows.Scan(
 			&(event.EID),
 			&(event.Name),
+			&(event.Desc),
 			&(event.Start),
 			&(event.Duration),
 			&(event.Created),
