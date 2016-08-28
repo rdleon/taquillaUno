@@ -1,15 +1,10 @@
 'use strict'
 
 function run() {
-    var container,
-        http,
+    var http,
         menu,
         loggedIn = false,
         forms = {};
-
-    menu = document.getElementById('menu');
-    container = document.getElementById('container');
-    http = new HTTP();
 
     /**
      * Defines the basic functionality for the login form
@@ -95,6 +90,10 @@ function run() {
      * bulk of the web UI.
      */
     function init() {
+        http = new HTTP();
+
+        menu = document.getElementById('menu');
+
         forms.login = document.getElementById('loginForm');
         forms.user = document.getElementById('userForm');
         forms.event = document.getElementById('eventForm');
