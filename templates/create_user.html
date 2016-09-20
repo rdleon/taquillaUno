@@ -1,0 +1,23 @@
+{{define "body"}}
+<div id="addUser">
+  <h2>Add User</h2>
+  <form action="/admin/users/add" method="POST">
+    <label for="uname">Username:
+      <input type="text" name="uname" value="" />
+    </label>
+    <label for="fname">Display Name:
+      <input type="text" name="fname" value="" />
+    </label>
+    <label for="email">E-mail:
+      <input type="text" name="email" value="" />
+    </label>
+    <label for="password">Password:
+      <input type="password" name="password" value="" />
+    </label>
+    <label for="password">Confirm Password:
+      <input type="password" name="password_confirmation" value="" />
+    </label>
+    <input type="submit" name="create" value="Add" />
+  </form>
+</div>
+{{end}}
