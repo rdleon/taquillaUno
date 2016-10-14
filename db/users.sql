@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS users;
+
 CREATE TABLE users (
 	uid       serial PRIMARY KEY,
 	user_name varchar(255),

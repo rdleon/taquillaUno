@@ -20,7 +20,7 @@ func main() {
 	Conf = map[string]string{
 		"db_user":   "taquilla",
 		"db_passwd": "secret",
-		"db_name":   "taquilla",
+		"db_name":   "taquillatest",
 		"db_host":   "localhost",
 		"listen":    "127.0.0.1:8080",
 		"secret":    "secretkeyVerySecret",
